@@ -1,0 +1,134 @@
+import tkinter as tk
+from tkinter import messagebox
+import csv
+import os
+
+# Función para inicializar los archivos CSV si no existen
+def inicializar_archivos():
+    if not os.path.exists('personas.csv'):
+        with open('personas.csv', 'w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(["Código", "Nombre", "Costo por Hora Extra"])
+
+    if not os.path.exists('horas_extras.csv'):
+        with open('horas_extras.csv', 'w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(["Código", "Horas Extras"])
+
+# Clase principal de la aplicación
+class GestionHorasExtras:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Gestión de Horas Extras")
+
+        # Menú principal
+        menu = tk.Menu(self.root)
+        self.root.config(menu=menu)
+
+        # Menús
+        personas_menu = tk.Menu(menu)
+        menu.add_cascade(label="Personas", menu=personas_menu)
+        personas_menu.add_command(label="Añadir Persona", command=self.agregar_persona)
+
+        horas_menu = tk.Menu(menu)
+        menu.add_cascade(label="Horas Extras", menu=horas_menu)
+        horas_menu.add_command(label="Registrar Horas Extras", command=self.registrar_horas_extras)
+
+        reporte_menu = tk.Menu(menu)
+        menu.add_cascade(label="Reportes", menu=reporte_menu)
+        reporte_menu.add_command(label="Sacar Pago", command=self.calcular_pago)
+
+    def agregar_persona(self):
+        self.new_window = tk.Toplevel(self.root)
+        self.new_window.title("Añadir Persona")
+
+        tk.Label(self.new_window, text="Código:").grid(row=0, column=0)
+        tk.Label(self.new_window, text="Nombre:").grid(row=1, column=0)
+        tk.Label(self.new_window, text="Pago por Hora Extra:").grid(row=2, column=0)
+
+        self.codigo_entry = tk.Entry(self.new_window)
+        self.nombre_entry = tk.Entry(self.new_window)
+        self.costo_entry = tk.Entry(self.new_window)
+
+        self.codigo_entry.grid(row=0, column=1)
+        self.nombre_entry.grid(row=1, column=1)
+        self.costo_entry.grid(row=2, column=1)
+
+        tk.Button(self.new_window, text="Guardar", command=self.guardar_persona).grid(row=3, column=1)
+
+    def guardar_persona(self):
+        codigo = self.codigo_entry.get()
+        nombre = self.nombre_entry.get()
+        costo = self.costo_entry.get()
+
+        with open('personas.csv', 'a', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow([codigo, nombre, costo])
+
+        messagebox.showinfo("Éxito", "Persona guardada exitosamente")
+        self.new_window.destroy()
+
+    def registrar_horas_extras(self):
+        self.new_window = tk.Toplevel(self.root)
+        self.new_window.title("Registrar Horas Extras")
+
+        tk.Label(self.new_window, text="Código:").grid(row=0, column=0)
+        tk.Label(self.new_window, text="Horas Extras:").grid(row=1, column=0)
+
+        self.codigo_horas_entry = tk.Entry(self.new_window)
+        self.horas_entry = tk.Entry(self.new_window)
+
+        self.codigo_horas_entry.grid(row=0, column=1)
+        self.horas_entry.grid(row=1, column=1)
+
+        tk.Button(self.new_window, text="Guardar", command=self.guardar_horas_extras).grid(row=2, column=1)
+
+    def guardar_horas_extras(self):
+        codigo = self.codigo_horas_entry.get()
+        horas = self.horas_entry.get()
+
+        with open('horas_extras.csv', 'a', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow([codigo, horas])
+
+        messagebox.showinfo("Éxito", "Horas extras guardadas exitosamente")
+        self.new_window.destroy()
+
+    def calcular_pago(self):
+        self.new_window = tk.Toplevel(self.root)
+        self.new_window.title("Sacar Pago")
+
+        tk.Label(self.new_window, text="Código:").grid(row=0, column=0)
+        self.codigo_pago_entry = tk.Entry(self.new_window)
+        self.codigo_pago_entry.grid(row=0, column=1)
+
+        tk.Button(self.new_window, text="Calcular", command=self.mostrar_pago).grid(row=1, column=1)
+
+    def mostrar_pago(self):
+        codigo = self.codigo_pago_entry.get()
+        total_horas = 0
+        costo_por_hora = 0
+
+        with open('horas_extras.csv', 'r') as file:
+            reader = csv.reader(file)
+            next(reader)  # Saltar la cabecera
+            for row in reader:
+                if row[0] == codigo:
+                    total_horas += int(row[1])
+
+        with open('personas.csv', 'r') as file:
+            reader = csv.reader(file)
+            next(reader)  # Saltar la cabecera
+            for row in reader:
+                if row[0] == codigo:
+                    costo_por_hora = float(row[2])
+                    break
+
+        total_pago = total_horas * costo_por_hora
+        messagebox.showinfo("Total a Pagar", f"El total a pagar por horas extras es: {total_pago}")
+
+if __name__ == "__main__":
+    inicializar_archivos()
+    root = tk.Tk()
+    app = GestionHorasExtras(root)
+    root.mainloop()
